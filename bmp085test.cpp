@@ -9,6 +9,9 @@
 #define DHTTYPE DHT22		// DHT 22 (AM2302)
 //#define DHTTYPE DHT21		// DHT 21 (AM2301)
 
+#define LIGHTSENSOR A2
+#define PIRSENSOR A1
+
 /*
 	Wiring
 	------
@@ -61,14 +64,87 @@ void PublishBMP085Info(){
     sprintf(szEventInfo, "Temperature=%.2f �C, Pressure=%.2f hPa", bmp.readTemperature(), bmp.readPressure()/100.0);
 
     Particle.publish("bmpo85info", szEventInfo);
+}
 
+void PublishDHTInfo() {
 
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a
+  // very slow sensor)
+	float h = dht.getHumidity();
+  // Read temperature as Celsius
+  float t = dht.getTempCelcius();
+  // Read temperature as Farenheit
+  float f = dht.getTempFarenheit();
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t) || isnan(f)) {
+		Serial.println("Failed to read from DHT sensor!");
+    return;
+	}
+
+  // Compute heat index
+  // Must send in temp in Fahrenheit!
+  float hi = dht.getHeatIndex();
+  float dp = dht.getDewPoint();
+  float k = dht.getTempKelvin();
+
+  Serial.print("Humid: ");
+  Serial.print(h);
+  Serial.print("% - ");
+  Serial.print("Temp: ");
+  Serial.print(t);
+  Serial.print("*C ");
+  Serial.print(f);
+  Serial.print("*F ");
+	Serial.print(k);
+  Serial.print("*K - ");
+  Serial.print("DewP: ");
+  Serial.print(dp);
+  Serial.print("*C - ");
+  Serial.print("HeatI: ");
+  Serial.print(hi);
+	Serial.println("*C");
+  Serial.println(Time.timeStr());
+
+  char szDHTEventInfo[64];
+
+  sprintf(szDHTEventInfo, "Temperature=%.2f *C, humidity=%.2f", t, h);
+
+  Particle.publish("DHTinfo", szDHTEventInfo);
+}
+
+void PublishLightInfo() {
+  char szLightEventInfo[64];
+
+  sprintf(szLightEventInfo, "Light=%s", digitalRead(LIGHTSENSOR)? "ON" : "OFF");
+
+  Particle.publish("LightInfo", szLightEventInfo);
+}
+
+void PublishPIRInfo() {
+  char szPIREventInfo[64];
+
+  sprintf(szPIREventInfo, "Movement=%s", digitalRead(PIRSENSOR)? "YES" : "NO");
+
+  Particle.publish("PIRInfo", szPIREventInfo);
 }
 
 // Initialize applicaiton
 void InitializeApplication(){
     Serial.begin(9600);
+
 	pinMode(D7, OUTPUT);
+
+  InitializeBMP085();
+
+  dht.begin();
+
+  // initialize light sensor
+  pinMode(LIGHTSENSOR, INPUT);
+
+  // initialize PIR sensor
+  pinMode(PIRSENSOR, INPUT);
 }
 
 // Blink LED and wait for some time
@@ -84,65 +160,18 @@ void BlinkLED(){
 }
 
 void setup() {
-    InitializeApplication();
-
-	InitializeBMP085();
-
-  dht.begin();
+  InitializeApplication();
 }
 
 void loop() {
     // Publish events. Wait for 2 second between publishes
     PublishBMP085Info();
+    PublishDHTInfo();
+    PublishLightInfo();
+    PublishPIRInfo();
 
     BlinkLED();
 
   // Wait a few seconds between measurements.
   	delay(2000);
-
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a
-  // very slow sensor)
-  	float h = dht.getHumidity();
-  // Read temperature as Celsius
-  	float t = dht.getTempCelcius();
-  // Read temperature as Farenheit
-  	float f = dht.getTempFarenheit();
-
-  // Check if any reads failed and exit early (to try again).
-  	if (isnan(h) || isnan(t) || isnan(f)) {
-  		Serial.println("Failed to read from DHT sensor!");
-  		return;
-  	}
-
-  // Compute heat index
-  // Must send in temp in Fahrenheit!
-  	float hi = dht.getHeatIndex();
-  	float dp = dht.getDewPoint();
-  	float k = dht.getTempKelvin();
-
-  	Serial.print("Humid: ");
-  	Serial.print(h);
-  	Serial.print("% - ");
-  	Serial.print("Temp: ");
-  	Serial.print(t);
-  	Serial.print("*C ");
-  	Serial.print(f);
-  	Serial.print("*F ");
-  	Serial.print(k);
-  	Serial.print("*K - ");
-  	Serial.print("DewP: ");
-  	Serial.print(dp);
-  	Serial.print("*C - ");
-  	Serial.print("HeatI: ");
-  	Serial.print(hi);
-  	Serial.println("*C");
-  	Serial.println(Time.timeStr());
-
-    char szDHTEventInfo[64];
-
-    sprintf(szDHTEventInfo, "Temperature=%.2f *C, humidity=%.2f", t, h);
-
-    Particle.publish("DHTinfo", szDHTEventInfo);
-
 }
