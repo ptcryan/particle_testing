@@ -61,9 +61,13 @@ void PublishBMP085Info(){
 
     char szEventInfo[64];
 
-    sprintf(szEventInfo, "Temperature=%.2f �C, Pressure=%.2f hPa", bmp.readTemperature(), bmp.readPressure()/100.0);
+    sprintf(szEventInfo, "Temperature=%.2f *C, Pressure=%.2f hPa", bmp.readTemperature(), bmp.readPressure()/100.0);
 
-    Particle.publish("bmpo85info", szEventInfo);
+    Particle.publish("bmp085info", szEventInfo);
+    delay(2000);
+
+    Particle.publish("librato_pressure", String(bmp.readPressure()/100.0), 60, PRIVATE);
+    delay(2000);
 }
 
 void PublishDHTInfo() {
@@ -106,28 +110,43 @@ void PublishDHTInfo() {
   Serial.print(hi);
 	Serial.println("*C");
   Serial.println(Time.timeStr());
-
+  /*
   char szDHTEventInfo[64];
 
   sprintf(szDHTEventInfo, "Temperature=%.2f *C, humidity=%.2f", t, h);
 
   Particle.publish("DHTinfo", szDHTEventInfo);
+  */
+  Particle.publish("librato_dht_t", String(t), 60, PRIVATE);
+  delay(2000);
+  Particle.publish("librato_dht_h", String(h), 60, PRIVATE);
+  delay(2000);
 }
 
 void PublishLightInfo() {
+
   char szLightEventInfo[64];
 
   sprintf(szLightEventInfo, "Light=%s", digitalRead(LIGHTSENSOR)? "ON" : "OFF");
 
   Particle.publish("LightInfo", szLightEventInfo);
+  delay(2000);
+
+  Particle.publish("librato_light", digitalRead(LIGHTSENSOR)? "ON" : "OFF", 60, PRIVATE);
+  delay(2000);
 }
 
 void PublishPIRInfo() {
+
   char szPIREventInfo[64];
 
   sprintf(szPIREventInfo, "Movement=%s", digitalRead(PIRSENSOR)? "YES" : "NO");
 
   Particle.publish("PIRInfo", szPIREventInfo);
+  delay(2000);
+
+  Particle.publish("librato_PIR", digitalRead(PIRSENSOR)? "YES" : "NO", 60, PRIVATE);
+  delay(2000);
 }
 
 // Initialize applicaiton
@@ -173,5 +192,5 @@ void loop() {
     BlinkLED();
 
   // Wait a few seconds between measurements.
-  	delay(2000);
+  //delay(2000);
 }
