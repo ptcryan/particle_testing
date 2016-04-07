@@ -167,15 +167,13 @@ void InitializeApplication(){
 }
 
 // Blink LED and wait for some time
-void BlinkLED(){
-    digitalWrite(D7, HIGH);
-    delay(250);
+void BlinkLED(unsigned char blinks) {
+	for (unsigned char i = 0; i < blinks; i++) {
+		digitalWrite(D7, HIGH);
+    delay(150);
     digitalWrite(D7, LOW);
-    delay(250);
-    digitalWrite(D7, HIGH);
-    delay(250);
-    digitalWrite(D7, LOW);
-    delay(250);
+    delay(150);
+	}
 }
 
 void setup() {
@@ -189,7 +187,7 @@ void loop() {
     PublishLightInfo();
     PublishPIRInfo();
 
-    BlinkLED();
+    BlinkLED(2);
 
   // Wait a few seconds between measurements.
   //delay(2000);
