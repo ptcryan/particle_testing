@@ -14,8 +14,13 @@
  */
 #ifndef RTCLIB
 	#define RTCLIB
-	#include "Arduino.h"
-	#include "Wire.h"
+	#if defined (ARDUINO)
+		#include "Arduino.h"
+		#include "Wire.h"
+	#else
+		#include "application.h"
+	#endif
+
 	/*
 	RTC I2C Address:
 	DS3231 ROM 0x57

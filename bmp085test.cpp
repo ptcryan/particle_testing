@@ -2,6 +2,9 @@
 #include "application.h"
 #include "Adafruit_BMP085.h"
 #include "Adafruit_DHT.h"
+//#include "RTCLib.h"
+#include "blynk.h"
+#include "SimpleTimer.h"
 
 #define DHTPIN A0     // what pin we're connected to
 // Uncomment whatever type you're using!
@@ -11,6 +14,12 @@
 
 #define LIGHTSENSOR A2
 #define PIRSENSOR A1
+
+char auth[] = "200b9aa3013f41b6be332549fb67ac21";
+
+// Attach virtual serial terminal to Virtual Pin V1
+WidgetTerminal terminal(V2);
+
 
 /*
 	Wiring
@@ -23,13 +32,21 @@
 
 Adafruit_BMP085 bmp;
 DHT dht(DHTPIN, DHTTYPE);
+//RTCLib rtc;
+SimpleTimer timer;
+
+float temperature = 0;
+float humidity = 0;
+int pressure = 0;
+
+
 
 // Initialize BMP085
 
 void InitializeBMP085(){
 	if (!bmp.begin()) {
 		Serial.println("Could not find a valid BMP085 sensor, check wiring!");
-		while (1) {}
+		//while (1) {}
 	}
 }
 
@@ -68,6 +85,32 @@ void PublishBMP085Info(){
 
     Particle.publish("librato_pressure", String(bmp.readPressure()/100.0), 60, PRIVATE);
     delay(2000);
+}
+
+void GetTemperature() {
+	temperature = dht.getTempFarenheit();
+}
+
+void SendTemperature() {
+	Blynk.virtualWrite(V3, temperature);
+}
+
+void GetHumidity() {
+	humidity = dht.getHumidity();
+}
+
+void SendHumidity() {
+	Blynk.virtualWrite(V4, humidity);
+}
+
+void GetPressure() {
+	pressure = bmp.readPressure();
+}
+
+void SendPressure() {
+	Blynk.virtualWrite(V5, pressure);
+	terminal.write("Pressure is %d", pressure);
+	terminal.flush();
 }
 
 void PublishDHTInfo() {
@@ -110,17 +153,25 @@ void PublishDHTInfo() {
   Serial.print(hi);
 	Serial.println("*C");
   Serial.println(Time.timeStr());
-  /*
+
   char szDHTEventInfo[64];
 
   sprintf(szDHTEventInfo, "Temperature=%.2f *C, humidity=%.2f", t, h);
 
-  Particle.publish("DHTinfo", szDHTEventInfo);
-  */
+  // Particle.publish("DHTinfo", szDHTEventInfo);
+
   Particle.publish("librato_dht_t", String(t), 60, PRIVATE);
   delay(2000);
   Particle.publish("librato_dht_h", String(h), 60, PRIVATE);
   delay(2000);
+
+	while (Blynk.connect() == false) {
+		delay(10); // Wait until connected
+	}
+
+	terminal.print(szDHTEventInfo);
+	terminal.print("\n");
+	terminal.flush();
 }
 
 void PublishLightInfo() {
@@ -149,8 +200,32 @@ void PublishPIRInfo() {
   delay(2000);
 }
 
+/*void PublishRTCInfo() {
+
+	char szRTCEventInfo[64];
+	Serial.print("RTC DateTime: ");
+	Serial.print(rtc.year());
+	Serial.print('/');
+	Serial.print(rtc.month());
+	Serial.print('/');
+	Serial.print(rtc.day());
+	Serial.print(' ');
+	Serial.print(rtc.hour());
+	Serial.print(':');
+	Serial.print(rtc.minute());
+	Serial.print(':');
+	Serial.print(rtc.second());
+	Serial.print(" DOW: ");
+	Serial.println(rtc.dayOfWeek());
+
+	sprintf(szRTCEventInfo, "RTC Date: %d/%d/%d %d:%d:%d %d", rtc.year(), rtc.month(), rtc.day(), rtc.hour(), rtc.minute(), rtc.second(), rtc.dayOfWeek());
+
+	Particle.publish("RTCInfo", szRTCEventInfo);
+	delay(2000);
+}*/
+
 // Initialize applicaiton
-void InitializeApplication(){
+void InitializeApplication() {
     Serial.begin(9600);
 
 	pinMode(D7, OUTPUT);
@@ -177,17 +252,49 @@ void BlinkLED(unsigned char blinks) {
 }
 
 void setup() {
+
+	delay(30000L);  // protection delay in case app is crashing
+
   InitializeApplication();
+
+	// rtc.set(0, 0, 0, 6, 8, 4, 16);
+
+	Blynk.begin(auth);
+
+	while (Blynk.connect() == false) {
+		delay(10); // Wait until connected
+	}
+	// This will print Blynk Software version to the Terminal Widget when
+	// your hardware gets connected to Blynk Server
+	terminal.println(F("Blynk v" BLYNK_VERSION ": Device started"));
+	terminal.flush();
+
+	timer.setInterval(5000L, GetTemperature);
+	timer.setInterval(10000L, SendTemperature);
+	timer.setInterval(5000L, GetHumidity);
+	timer.setInterval(10000L, SendHumidity);
+	// timer.setInterval(5000L, GetPressure);
+	// timer.setInterval(10000L, SendPressure);
 }
 
 void loop() {
     // Publish events. Wait for 2 second between publishes
-    PublishBMP085Info();
-    PublishDHTInfo();
-    PublishLightInfo();
-    PublishPIRInfo();
+    //PublishBMP085Info();
+    //PublishDHTInfo();
+    //PublishLightInfo();
+    //PublishPIRInfo();
 
-    BlinkLED(2);
+		Blynk.run();
+		timer.run();
+
+		// terminal.println("Hello!");
+		// terminal.flush();
+
+		// rtc.refresh();
+
+		// PublishRTCInfo();
+
+    BlinkLED(1);
 
   // Wait a few seconds between measurements.
   //delay(2000);

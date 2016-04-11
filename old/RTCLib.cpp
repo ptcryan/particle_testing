@@ -12,7 +12,11 @@
  * @version 1.0
  * @created 2015-05-07
  */
+#if defined (__ARDUINO__)
 #include <Arduino.h>
+#else
+#include "application.h"
+#endif
 #include "RTCLib.h"
 
 RTCLib::RTCLib() {
@@ -126,4 +130,3 @@ uint8_t RTCLib::dayOfWeek() {
 		Wire.endTransmission();
 	}
 #endif
-
