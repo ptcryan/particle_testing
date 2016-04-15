@@ -6,6 +6,10 @@
 #include "blynk.h"
 #include "SimpleTimer.h"
 
+void SendLight(void);
+void SendMotion(void);
+
+
 #define DHTPIN A0     // what pin we're connected to
 // Uncomment whatever type you're using!
 //#define DHTTYPE DHT11		// DHT 11
@@ -19,6 +23,8 @@ char auth[] = "200b9aa3013f41b6be332549fb67ac21";
 
 // Attach virtual serial terminal to Virtual Pin V1
 WidgetTerminal terminal(V2);
+WidgetLED lightLed(V7);
+WidgetLED motionLed(V6);
 
 
 /*
@@ -37,7 +43,9 @@ SimpleTimer timer;
 
 float temperature = 0;
 float humidity = 0;
-int pressure = 0;
+float pressure = 0;
+bool motion = FALSE;
+bool light = FALSE;
 
 
 
@@ -93,6 +101,10 @@ void GetTemperature() {
 
 void SendTemperature() {
 	Blynk.virtualWrite(V3, temperature);
+	terminal.print("temperature = ");
+	terminal.print(temperature);
+	terminal.println(" *F");
+	terminal.flush();
 }
 
 void GetHumidity() {
@@ -101,15 +113,49 @@ void GetHumidity() {
 
 void SendHumidity() {
 	Blynk.virtualWrite(V4, humidity);
+	terminal.print("humidity = ");
+	terminal.print(humidity);
+	terminal.println(" %");
+	terminal.flush();
 }
 
 void GetPressure() {
-	pressure = bmp.readPressure();
+	pressure = bmp.readPressure() * 0.0002953;
 }
 
 void SendPressure() {
 	Blynk.virtualWrite(V5, pressure);
-	terminal.write("Pressure is %d", pressure);
+	terminal.print("Pressure = ");
+	terminal.print(pressure);
+	terminal.println(" in Hg");
+	terminal.flush();
+}
+
+void GetMotion() {
+	if (digitalRead(PIRSENSOR) && (motion != TRUE)) {
+		motion = TRUE;
+		motionLed.on();
+		SendMotion();
+	}
+}
+
+void SendMotion() {
+	terminal.print("Motion = ");
+	terminal.println(motion? "ON" : "OFF");
+	terminal.flush();
+}
+
+void GetLight() {
+	if (digitalRead(LIGHTSENSOR) && (light != TRUE)) {
+		light = TRUE;
+		lightLed.on();
+		SendLight();
+	}
+}
+
+void SendLight() {
+	terminal.print("Light = ");
+	terminal.println(light? "ON" : "OFF");
 	terminal.flush();
 }
 
@@ -173,6 +219,8 @@ void PublishDHTInfo() {
 	terminal.print("\n");
 	terminal.flush();
 }
+
+
 
 void PublishLightInfo() {
 
@@ -273,8 +321,32 @@ void setup() {
 	timer.setInterval(10000L, SendTemperature);
 	timer.setInterval(5000L, GetHumidity);
 	timer.setInterval(10000L, SendHumidity);
-	// timer.setInterval(5000L, GetPressure);
-	// timer.setInterval(10000L, SendPressure);
+	timer.setInterval(5000L, GetPressure);
+	timer.setInterval(10000L, SendPressure);
+	timer.setInterval(100, GetMotion);
+	// timer.setInterval(20000L, SendMotion);
+	timer.setInterval(100, GetLight);
+	// timer.setInterval(20000L, SendLight);
+}
+
+BLYNK_WRITE(V8) //Button Widget is writing to pin V8
+{
+  int pinData = param.asInt(); // to reset light LED
+	if (pinData == 0) {
+		lightLed.off();
+		light = FALSE;
+		SendLight();
+	}
+}
+
+BLYNK_WRITE(V9) //Button Widget is writing to pin V9
+{
+  int pinData = param.asInt(); // to reset motion LED
+	if (pinData == 0) {
+		motionLed.off();
+		motion = FALSE;
+		SendMotion();
+	}
 }
 
 void loop() {
