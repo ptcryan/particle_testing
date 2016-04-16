@@ -146,7 +146,7 @@ void SendMotion() {
 }
 
 void GetLight() {
-	if (digitalRead(LIGHTSENSOR) && (light != TRUE)) {
+	if ((digitalRead(LIGHTSENSOR) == FALSE) && (light != TRUE)) {
 		light = TRUE;
 		lightLed.on();
 		SendLight();
