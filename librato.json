@@ -1,0 +1,19 @@
+{
+    "eventName": "librato_",
+    "url": "https://metrics-api.librato.com/v1/metrics",
+    "requestType": "POST",
+    "auth": {
+        "username": "ptcryan@gmail.com",
+        "password": "024704c898bc6bb68cc79843edff92e6e01a2ae204c1c284aa302ce7543c3622"
+    },
+    "json": {
+        "gauges": [
+            {
+                "name": "{{SPARK_EVENT_NAME}}",
+                "value": "{{SPARK_EVENT_VALUE}}",
+                "source": "{{SPARK_CORE_ID}}"
+            }
+        ]
+    },
+    "mydevices": true
+}
