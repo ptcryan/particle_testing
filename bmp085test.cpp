@@ -70,7 +70,7 @@ void SendTemperature() {
 }
 
 void GetHumidity() {
-	//humidity = dht.getHumidity();
+	humidity = dht.getHumidity();
 }
 
 void SendHumidity() {
@@ -134,7 +134,7 @@ void UpdateTemperature() {
 
 void UpdateHumidity() {
 	GetHumidity();
-	UpdateHumidity();
+	SendHumidity();
 }
 
 void UpdatePressure() {
@@ -210,13 +210,17 @@ void InitializeApplication() {
 }
 
 // Blink LED and wait for some time
-void BlinkLED(unsigned char blinks = 1) {
+void BlinkLED(unsigned char blinks) {
 	for (unsigned char i = 0; i < blinks; i++) {
 		digitalWrite(D7, HIGH);
     delay(150);
     digitalWrite(D7, LOW);
     delay(150);
 	}
+}
+
+void LEDUpdate() {
+	BlinkLED(1);
 }
 
 void setup() {
@@ -237,12 +241,12 @@ void setup() {
 	terminal.println(F("Blynk v" BLYNK_VERSION ": Device started"));
 	terminal.flush();
 
-	terminal.println(timer.setInterval(3000L, UpdateTemperature));
-	//timer.setInterval(5000L, UpdateHumidity);
-	terminal.println(timer.setInterval(7000L, UpdatePressure));
+	timer.setInterval(30000L, UpdateTemperature);
+	timer.setInterval(50000L, UpdateHumidity);
+	timer.setInterval(70000L, UpdatePressure);
 	timer.setInterval(100, GetMotion);
 	timer.setInterval(100, GetLight);
-	//timer.setInterval(200, BlinkLED);
+	timer.setInterval(200, LEDUpdate);
 }
 
 BLYNK_WRITE(V8) //Button Widget is writing to pin V8
@@ -273,5 +277,5 @@ void loop() {
 
 		// PublishRTCInfo();
 
-    BlinkLED(1);
+    // BlinkLED(1);
 }
