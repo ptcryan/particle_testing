@@ -26,7 +26,6 @@ WidgetTerminal terminal(V2);
 WidgetLED lightLed(V7);
 WidgetLED motionLed(V6);
 
-
 /*
 	Wiring
 	------
@@ -47,52 +46,12 @@ float pressure = 0;
 bool motion = FALSE;
 bool light = FALSE;
 
-
-
 // Initialize BMP085
 
 void InitializeBMP085(){
 	if (!bmp.begin()) {
 		Serial.println("Could not find a valid BMP085 sensor, check wiring!");
-		//while (1) {}
 	}
-}
-
-// Publish Pressure, Altitude
-void PublishBMP085Info(){
-    Serial.print("Temperature = ");
-    Serial.print(bmp.readTemperature());
-    Serial.print(" *C  ");
-    Serial.print((bmp.readTemperature() * 1.8) + 32);
-    Serial.println(" *F");
-
-    Serial.print("Pressure = ");
-    Serial.print(bmp.readPressure());
-    Serial.println(" Pa");
-
-    // Calculate altitude assuming 'standard' barometric
-    // pressure of 1013.25 millibar = 101325 Pascal
-    Serial.print("Altitude = ");
-    Serial.print(bmp.readAltitude());
-    Serial.println(" meters");
-
-  // you can get a more precise measurement of altitude
-  // if you know the current sea level pressure which will
-  // vary with weather and such. If it is 1015 millibars
-  // that is equal to 101500 Pascals.
-    Serial.print("Real altitude = ");
-    Serial.print(bmp.readAltitude(101500));
-    Serial.println(" meters");
-
-    char szEventInfo[64];
-
-    sprintf(szEventInfo, "Temperature=%.2f *C, Pressure=%.2f hPa", bmp.readTemperature(), bmp.readPressure()/100.0);
-
-    Particle.publish("bmp085info", szEventInfo);
-    delay(2000);
-
-    Particle.publish("librato_pressure", String(bmp.readPressure()/100.0), 60, PRIVATE);
-    delay(2000);
 }
 
 void GetTemperature() {
@@ -105,10 +64,13 @@ void SendTemperature() {
 	terminal.print(temperature);
 	terminal.println(" *F");
 	terminal.flush();
+	Particle.publish("librato_dht_t", String(temperature), 60, PRIVATE);
+	terminal.println("published");
+	terminal.flush();
 }
 
 void GetHumidity() {
-	humidity = dht.getHumidity();
+	//humidity = dht.getHumidity();
 }
 
 void SendHumidity() {
@@ -116,6 +78,9 @@ void SendHumidity() {
 	terminal.print("humidity = ");
 	terminal.print(humidity);
 	terminal.println(" %");
+	terminal.flush();
+	Particle.publish("librato_dht_h", String(humidity), 60, PRIVATE);
+	terminal.println("published");
 	terminal.flush();
 }
 
@@ -128,6 +93,9 @@ void SendPressure() {
 	terminal.print("Pressure = ");
 	terminal.print(pressure);
 	terminal.println(" in Hg");
+	terminal.flush();
+	Particle.publish("librato_pressure", String(pressure), 60, PRIVATE);
+	terminal.println("published");
 	terminal.flush();
 }
 
@@ -159,68 +127,20 @@ void SendLight() {
 	terminal.flush();
 }
 
-void PublishDHTInfo() {
-
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a
-  // very slow sensor)
-	float h = dht.getHumidity();
-  // Read temperature as Celsius
-  float t = dht.getTempCelcius();
-  // Read temperature as Farenheit
-  float f = dht.getTempFarenheit();
-
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(h) || isnan(t) || isnan(f)) {
-		Serial.println("Failed to read from DHT sensor!");
-    return;
-	}
-
-  // Compute heat index
-  // Must send in temp in Fahrenheit!
-  float hi = dht.getHeatIndex();
-  float dp = dht.getDewPoint();
-  float k = dht.getTempKelvin();
-
-  Serial.print("Humid: ");
-  Serial.print(h);
-  Serial.print("% - ");
-  Serial.print("Temp: ");
-  Serial.print(t);
-  Serial.print("*C ");
-  Serial.print(f);
-  Serial.print("*F ");
-	Serial.print(k);
-  Serial.print("*K - ");
-  Serial.print("DewP: ");
-  Serial.print(dp);
-  Serial.print("*C - ");
-  Serial.print("HeatI: ");
-  Serial.print(hi);
-	Serial.println("*C");
-  Serial.println(Time.timeStr());
-
-  char szDHTEventInfo[64];
-
-  sprintf(szDHTEventInfo, "Temperature=%.2f *C, humidity=%.2f", t, h);
-
-  // Particle.publish("DHTinfo", szDHTEventInfo);
-
-  Particle.publish("librato_dht_t", String(t), 60, PRIVATE);
-  delay(2000);
-  Particle.publish("librato_dht_h", String(h), 60, PRIVATE);
-  delay(2000);
-
-	while (Blynk.connect() == false) {
-		delay(10); // Wait until connected
-	}
-
-	terminal.print(szDHTEventInfo);
-	terminal.print("\n");
-	terminal.flush();
+void UpdateTemperature() {
+	GetTemperature();
+	SendTemperature();
 }
 
+void UpdateHumidity() {
+	GetHumidity();
+	UpdateHumidity();
+}
 
+void UpdatePressure() {
+	GetPressure();
+	SendPressure();
+}
 
 void PublishLightInfo() {
 
@@ -290,7 +210,7 @@ void InitializeApplication() {
 }
 
 // Blink LED and wait for some time
-void BlinkLED(unsigned char blinks) {
+void BlinkLED(unsigned char blinks = 1) {
 	for (unsigned char i = 0; i < blinks; i++) {
 		digitalWrite(D7, HIGH);
     delay(150);
@@ -317,16 +237,12 @@ void setup() {
 	terminal.println(F("Blynk v" BLYNK_VERSION ": Device started"));
 	terminal.flush();
 
-	timer.setInterval(5000L, GetTemperature);
-	timer.setInterval(10000L, SendTemperature);
-	timer.setInterval(5000L, GetHumidity);
-	timer.setInterval(10000L, SendHumidity);
-	timer.setInterval(5000L, GetPressure);
-	timer.setInterval(10000L, SendPressure);
+	terminal.println(timer.setInterval(3000L, UpdateTemperature));
+	//timer.setInterval(5000L, UpdateHumidity);
+	terminal.println(timer.setInterval(7000L, UpdatePressure));
 	timer.setInterval(100, GetMotion);
-	// timer.setInterval(20000L, SendMotion);
 	timer.setInterval(100, GetLight);
-	// timer.setInterval(20000L, SendLight);
+	//timer.setInterval(200, BlinkLED);
 }
 
 BLYNK_WRITE(V8) //Button Widget is writing to pin V8
@@ -350,24 +266,12 @@ BLYNK_WRITE(V9) //Button Widget is writing to pin V9
 }
 
 void loop() {
-    // Publish events. Wait for 2 second between publishes
-    //PublishBMP085Info();
-    //PublishDHTInfo();
-    //PublishLightInfo();
-    //PublishPIRInfo();
-
 		Blynk.run();
 		timer.run();
-
-		// terminal.println("Hello!");
-		// terminal.flush();
 
 		// rtc.refresh();
 
 		// PublishRTCInfo();
 
     BlinkLED(1);
-
-  // Wait a few seconds between measurements.
-  //delay(2000);
 }
