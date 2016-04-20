@@ -13,8 +13,10 @@
  * @created 2015-05-07
  */
 #ifndef RTCLIB
+
 	#define RTCLIB
-	#if defined (ARDUINO)
+
+	#ifdef ARDUINO
 		#include "Arduino.h"
 		#include "Wire.h"
 	#else
@@ -69,7 +71,7 @@
 			#ifdef RTCLIB_EEPROM
 				unsigned char eeprom_read(const unsigned int address);
 				void eeprom_write(const unsigned int address, const unsigned char data);
-			#endif;
+			#endif
 
 		private:
 			uint8_t _second = 0;

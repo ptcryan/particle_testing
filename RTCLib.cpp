@@ -12,10 +12,10 @@
  * @version 1.0
  * @created 2015-05-07
  */
-#if defined (__ARDUINO__)
-#include <Arduino.h>
+#if defined (ARDUINO)
+	#include <Arduino.h>
 #else
-#include "application.h"
+	#include "application.h"
 #endif
 #include "RTCLib.h"
 

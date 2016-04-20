@@ -2,12 +2,13 @@
 #include "application.h"
 #include "Adafruit_BMP085.h"
 #include "Adafruit_DHT.h"
-//#include "RTCLib.h"
+#include "RTCLib.h"
 #include "blynk.h"
 #include "SimpleTimer.h"
 
 void SendLight(void);
 void SendMotion(void);
+void PublishRTCInfo(void);
 
 
 #define DHTPIN A0     // what pin we're connected to
@@ -37,7 +38,7 @@ WidgetLED motionLed(V6);
 
 Adafruit_BMP085 bmp;
 DHT dht(DHTPIN, DHTTYPE);
-//RTCLib rtc;
+RTCLib rtc;
 SimpleTimer timer;
 
 float temperature = 0;
@@ -168,7 +169,11 @@ void PublishPIRInfo() {
   delay(2000);
 }
 
-/*void PublishRTCInfo() {
+void UpdateTime() {
+	PublishRTCInfo();
+}
+
+void PublishRTCInfo() {
 
 	char szRTCEventInfo[64];
 	Serial.print("RTC DateTime: ");
@@ -189,8 +194,7 @@ void PublishPIRInfo() {
 	sprintf(szRTCEventInfo, "RTC Date: %d/%d/%d %d:%d:%d %d", rtc.year(), rtc.month(), rtc.day(), rtc.hour(), rtc.minute(), rtc.second(), rtc.dayOfWeek());
 
 	Particle.publish("RTCInfo", szRTCEventInfo);
-	delay(2000);
-}*/
+}
 
 // Initialize applicaiton
 void InitializeApplication() {
@@ -247,6 +251,7 @@ void setup() {
 	timer.setInterval(100, GetMotion);
 	timer.setInterval(100, GetLight);
 	timer.setInterval(200, LEDUpdate);
+	timer.setInterval(2000L, UpdateTime);
 }
 
 BLYNK_WRITE(V8) //Button Widget is writing to pin V8
@@ -269,11 +274,18 @@ BLYNK_WRITE(V9) //Button Widget is writing to pin V9
 	}
 }
 
+bool timeSet = FALSE;
+
 void loop() {
 		Blynk.run();
 		timer.run();
 
-		// rtc.refresh();
+		if (!timeSet) {
+			rtc.set(0,0,12,7,1,1,66); // 12 pm on 1/1/1966, Saturday
+			timeSet = TRUE;
+		}
+
+		rtc.refresh();
 
 		// PublishRTCInfo();
 
