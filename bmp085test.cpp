@@ -20,6 +20,7 @@ void PublishRTCInfo(void);
 #define LIGHTSENSOR A2
 #define PIRSENSOR A1
 
+// This is theh key that binds this app with Blynk
 char auth[] = "200b9aa3013f41b6be332549fb67ac21";
 
 // Attach virtual serial terminal to Virtual Pin V1
@@ -143,32 +144,6 @@ void UpdatePressure() {
 	SendPressure();
 }
 
-void PublishLightInfo() {
-
-  char szLightEventInfo[64];
-
-  sprintf(szLightEventInfo, "Light=%s", digitalRead(LIGHTSENSOR)? "ON" : "OFF");
-
-  Particle.publish("LightInfo", szLightEventInfo);
-  delay(2000);
-
-  Particle.publish("librato_light", digitalRead(LIGHTSENSOR)? "ON" : "OFF", 60, PRIVATE);
-  delay(2000);
-}
-
-void PublishPIRInfo() {
-
-  char szPIREventInfo[64];
-
-  sprintf(szPIREventInfo, "Movement=%s", digitalRead(PIRSENSOR)? "YES" : "NO");
-
-  Particle.publish("PIRInfo", szPIREventInfo);
-  delay(2000);
-
-  Particle.publish("librato_PIR", digitalRead(PIRSENSOR)? "YES" : "NO", 60, PRIVATE);
-  delay(2000);
-}
-
 void UpdateTime() {
 	PublishRTCInfo();
 }
@@ -191,7 +166,7 @@ void PublishRTCInfo() {
 	Serial.print(" DOW: ");
 	Serial.println(rtc.dayOfWeek());
 
-	sprintf(szRTCEventInfo, "RTC Date: %d/%d/%d %d:%d:%d %d", rtc.year(), rtc.month(), rtc.day(), rtc.hour(), rtc.minute(), rtc.second(), rtc.dayOfWeek());
+	sprintf(szRTCEventInfo, "RTC Date: %02d/%02d/%02d %02d:%02d:%02d %d", rtc.year(), rtc.month(), rtc.day(), rtc.hour(), rtc.minute(), rtc.second(), rtc.dayOfWeek());
 
 	Particle.publish("RTCInfo", szRTCEventInfo);
 }
@@ -286,8 +261,4 @@ void loop() {
 		}
 
 		rtc.refresh();
-
-		// PublishRTCInfo();
-
-    // BlinkLED(1);
 }
