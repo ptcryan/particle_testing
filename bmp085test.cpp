@@ -251,7 +251,7 @@ BLYNK_WRITE(V9) //Button Widget is writing to pin V9
 	}
 }
 
-bool timeSet = FALSE;
+bool timeSet = TRUE;
 
 void loop() {
 		Blynk.run();
