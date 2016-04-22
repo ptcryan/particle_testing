@@ -10,6 +10,8 @@ void SendLight(void);
 void SendMotion(void);
 void PublishRTCInfo(void);
 
+char *weekday[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+
 
 #define DHTPIN A0     // what pin we're connected to
 // Uncomment whatever type you're using!
@@ -152,11 +154,11 @@ void PublishRTCInfo() {
 
 	char szRTCEventInfo[64];
 	Serial.print("RTC DateTime: ");
-	Serial.print(rtc.year());
-	Serial.print('/');
 	Serial.print(rtc.month());
 	Serial.print('/');
 	Serial.print(rtc.day());
+	Serial.print('/');
+	Serial.print(rtc.year());
 	Serial.print(' ');
 	Serial.print(rtc.hour());
 	Serial.print(':');
@@ -164,9 +166,9 @@ void PublishRTCInfo() {
 	Serial.print(':');
 	Serial.print(rtc.second());
 	Serial.print(" DOW: ");
-	Serial.println(rtc.dayOfWeek());
+	Serial.println(weekday[rtc.dayOfWeek() - 1]);
 
-	sprintf(szRTCEventInfo, "RTC Date: %02d/%02d/%02d %02d:%02d:%02d %d", rtc.year(), rtc.month(), rtc.day(), rtc.hour(), rtc.minute(), rtc.second(), rtc.dayOfWeek());
+	sprintf(szRTCEventInfo, "RTC Date: %02d/%02d/%02d %02d:%02d:%02d %s", rtc.month(), rtc.day(), rtc.year(), rtc.hour(), rtc.minute(), rtc.second(), weekday[rtc.dayOfWeek() - 1]);
 
 	Particle.publish("RTCInfo", szRTCEventInfo);
 }
@@ -256,7 +258,7 @@ void loop() {
 		timer.run();
 
 		if (!timeSet) {
-			rtc.set(0,0,12,7,1,1,66); // 12 pm on 1/1/1966, Saturday
+			rtc.set(Time.second(), Time.minute(), Time.hour(), Time.weekday(), Time.day(), Time.month(), (Time.year() - 2000));
 			timeSet = TRUE;
 		}
 
