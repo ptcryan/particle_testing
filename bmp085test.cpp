@@ -213,7 +213,7 @@ void setup() {
 
 	// rtc.set(0, 0, 0, 6, 8, 4, 16);
 
-	Blynk.begin(auth, IPAddress(10,0,1,37));
+	Blynk.begin(auth, IPAddress(10,0,1,203));
 
 	while (Blynk.connect() == false) {
 		delay(10); // Wait until connected
