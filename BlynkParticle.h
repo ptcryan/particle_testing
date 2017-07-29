@@ -11,10 +11,8 @@
 #ifndef BlynkParticle_h
 #define BlynkParticle_h
 
-#define BLYNK_INFO_CONNECTION "CC3000"
-
 #include "BlynkApiParticle.h"
-#include "BlynkProtocol.h"
+#include "Blynk/BlynkProtocol.h"
 
 class BlynkTransportParticle
 {
@@ -36,10 +34,10 @@ public:
 
     bool connect() {
         if (domain) {
-            BLYNK_LOG("Connecting to %s:%d", domain, port);
+            BLYNK_LOG4(BLYNK_F("Connecting to "), domain, ':', port);
             return (1 == client.connect(domain, port));
         } else {
-            BLYNK_LOG("Connecting to %d.%d.%d.%d:%d", addr[0], addr[1], addr[2], addr[3], port);
+            BLYNK_LOG_IP("Connecting to ", addr);
             return (1 == client.connect(addr, port));
         }
         return 0;
@@ -75,22 +73,38 @@ public:
         : Base(transp)
     {}
 
-    void begin( const char* auth,
+    void config(const char* auth,
                 const char* domain = BLYNK_DEFAULT_DOMAIN,
                 uint16_t port      = BLYNK_DEFAULT_PORT)
     {
         Base::begin(auth);
-        ::delay(1000); // Give the board time to settle
         this->conn.begin(domain, port);
+    }
+
+    void config(const char* auth,
+                IPAddress addr,
+                uint16_t port      = BLYNK_DEFAULT_PORT)
+    {
+        Base::begin(auth);
+        this->conn.begin(addr, port);
+    }
+
+    void begin( const char* auth,
+                const char* domain = BLYNK_DEFAULT_DOMAIN,
+                uint16_t port      = BLYNK_DEFAULT_PORT)
+    {
+        ::delay(3000); // Give the board time to settle
+        config(auth, domain, port);
+        while(this->connect() != true) {}
     }
 
     void begin( const char* auth,
                 IPAddress addr,
-                uint16_t port)
+                uint16_t port      = BLYNK_DEFAULT_PORT)
     {
-        Base::begin(auth);
-        ::delay(1000); // Give the board time to settle
-        this->conn.begin(addr, port);
+        ::delay(3000); // Give the board time to settle
+        config(auth, addr, port);
+        while(this->connect() != true) {}
     }
 private:
 

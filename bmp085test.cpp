@@ -1,10 +1,10 @@
 // This #include statement was automatically added by the Spark IDE.
 #include "application.h"
-#include "Adafruit_BMP085.h"
-#include "Adafruit_DHT.h"
-#include "RTCLib.h"
+#include "Adafruit_libs/Adafruit_BMP085.h"
+#include "Adafruit_libs/Adafruit_DHT.h"
+#include "RTCLib/RTCLib.h"
 #include "blynk.h"
-#include "SimpleTimer.h"
+#include "SimpleTimer/SimpleTimer.h"
 
 void SendLight(void);
 void SendMotion(void);
@@ -23,7 +23,8 @@ char *weekday[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 #define PIRSENSOR A1
 
 // This is theh key that binds this app with Blynk
-char auth[] = "200b9aa3013f41b6be332549fb67ac21";
+// char auth[] = "200b9aa3013f41b6be332549fb67ac21";
+char auth[] = "e7f7723d71474f7fa65b783aabf06261";
 
 // Attach virtual serial terminal to Virtual Pin V1
 WidgetTerminal terminal(V2);
@@ -212,7 +213,7 @@ void setup() {
 
 	// rtc.set(0, 0, 0, 6, 8, 4, 16);
 
-	Blynk.begin(auth);
+	Blynk.begin(auth, IPAddress(10,0,1,37));
 
 	while (Blynk.connect() == false) {
 		delay(10); // Wait until connected
