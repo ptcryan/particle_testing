@@ -172,6 +172,8 @@ void PublishRTCInfo() {
 	sprintf(szRTCEventInfo, "RTC Date: %02d/%02d/%02d %02d:%02d:%02d %s", rtc.month(), rtc.day(), rtc.year(), rtc.hour(), rtc.minute(), rtc.second(), weekday[rtc.dayOfWeek() - 1]);
 
 	Particle.publish("RTCInfo", szRTCEventInfo);
+	terminal.println(szRTCEventInfo);
+	terminal.flush();
 }
 
 // Initialize applicaiton
@@ -180,7 +182,7 @@ void InitializeApplication() {
 
 	pinMode(D7, OUTPUT);
 
-  InitializeBMP085();
+  //InitializeBMP085();
 
   dht.begin();
 
@@ -225,11 +227,11 @@ void setup() {
 
 	timer.setInterval(30000L, UpdateTemperature);
 	timer.setInterval(50000L, UpdateHumidity);
-	timer.setInterval(70000L, UpdatePressure);
+	//timer.setInterval(70000L, UpdatePressure);
 	timer.setInterval(100, GetMotion);
 	timer.setInterval(100, GetLight);
 	timer.setInterval(200, LEDUpdate);
-	timer.setInterval(2000L, UpdateTime);
+	// timer.setInterval(60000L, UpdateTime);
 }
 
 BLYNK_WRITE(V8) //Button Widget is writing to pin V8
